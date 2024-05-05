@@ -5,6 +5,8 @@ import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.sql.*;
 
+import com.microsoft.sqlserver.jdbc.SQLServerException;
+
 import jakarta.servlet.http.HttpServletResponse;
 
 public class SQLConnection {
@@ -102,6 +104,7 @@ public class SQLConnection {
 			                    insertStmt.setString(2, password);
 			                    insertStmt.executeUpdate();
 			                    System.out.println("Login data inserted successfully for user" );
+			                    logLoginTime(username);
 			                } catch (SQLException e) {
 			                    e.printStackTrace();
 			                    
@@ -127,5 +130,47 @@ public class SQLConnection {
 			return err_message
 					;
 		}
+		
+		private void logLoginTime(String username) {
+		    String sql = "UPDATE SignIn SET login_time = CURRENT_TIMESTAMP WHERE username = ?";
+		    
+		    try {
+		    	SQLConnection timecon=new SQLConnection();
+		    	boolean time=timecon.connect();
+		    	if(time) {
+		    		 PreparedStatement statement = con.prepareStatement(sql);
+		 		        statement.setString(1, username);
+		 		        statement.executeUpdate();
+		 		        System.out.println("updated");
+		    	}
+		    	//con=DriverManager.getConnection(url);
+		        
+		    } catch (SQLException e) {
+		        e.printStackTrace();
+		    }
+		}
+		public void logLogoutTime(String username) {
+			
+		
+			SQLConnection timelog=new SQLConnection();
+	    	boolean logtime=timelog.connect();
+	            String query = "UPDATE SignUp SET logout_time = ? WHERE username = ?";
+	            if(logtime) {
+	            try 
+	            {	
+	            	PreparedStatement statement = con.prepareStatement(query);
+	            
+	                statement.setTimestamp(1, new Timestamp(new Date(0).getTime()));
+	                statement.setString(2, username);
+	                statement.executeUpdate();
+	                System.out.println("Logout time recorded for user: " + username);
+	            }catch (SQLException e) {
+		            e.printStackTrace();
+		        }
+	            }
+	           
+	         
+		}
+
 	 
 }

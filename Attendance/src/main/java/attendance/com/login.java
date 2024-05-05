@@ -70,6 +70,7 @@ public class login extends HttpServlet {
 		
 		//response.getWriter().append("Served at: ").append(request.getContextPath());
 	}
+	
 
 	/**
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
