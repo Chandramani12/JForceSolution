@@ -1,3 +1,14 @@
+create database login;
+--password :- ser@123
+use login
+
+create table signin(
+username varchar(255),
+password varchar(100),
+);
+
+select * from signin;
+
 use login  --- use data base
 
 select * from SignIn; --- retrive data from table
@@ -76,4 +87,17 @@ CREATE TABLE LoginHistory (
     action_time DATETIME
 );
 
+
+use login
+
+select * from SignIn
+
+CREATE TABLE SignIn (
+    username VARCHAR(255),
+    password VARCHAR(100),
+    login_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    logout_time DATETIME
+);
+
+ DROP TABLE SignIn;
 

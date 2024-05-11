@@ -70,6 +70,10 @@ public class Register extends HttpServlet {
  				rd.include(request, response);
               
             }
+         if(error_message.equals("Succefull Registered")) {
+        	 RequestDispatcher rd = request.getRequestDispatcher("index.html");
+				rd.include(request, response);
+         }
            
            
         }

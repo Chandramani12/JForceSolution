@@ -1,83 +1,98 @@
 package attendance.com;
 
-import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
-/**
- * Servlet implementation class login
- */
+@WebServlet("/login")
 public class login extends HttpServlet {
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-    /**
-     * Default constructor. 
-     */
     public login() {
-        // TODO Auto-generated constructor stub
+        // Constructor
     }
 
-	/**
-	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
-	 */
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		PrintWriter out=response.getWriter();
-		String username,password;
-		username=request.getParameter("username");
-		password=request.getParameter("password");
-		
-		String requestType=request.getParameter("login");
-		if(requestType!=null) {
-			
-			SQLConnection logindata=new SQLConnection();
-			String result=logindata.loginverfiycheck(username,password);
-			if(result.equals("UserName is empty")) {
-				 out.print("<b>Please Enter UserName</b>");
-				 
-	   				RequestDispatcher rd = request.getRequestDispatcher("index.html");
-	   				rd.include(request, response);
-				
-			} else if(result.equals("Password  is empty")) {
-				
-				out.print("<b>Please Enter password</b>"); 
-   				RequestDispatcher rd = request.getRequestDispatcher("index.html");
-   				rd.include(request, response);
-			}
-			else if(result.equals("Incorrect password")) {
-				out.print("<b>Please Enter Correct password</b>"); 
-   				RequestDispatcher rd = request.getRequestDispatcher("index.html");
-   				rd.include(request, response);
-			}
-			else  if(result.equals("User not Found")){
-				out.print("<b>Please Enter Correct UserName</b>"); 
-   				RequestDispatcher rd = request.getRequestDispatcher("index.html");
-   				rd.include(request, response);
-			}
-			
-		}
-		//HomeAttendancePage homepae=new HomeAttendancePage();
-		
-		else {
-			response.sendRedirect("Register.html");
-		}
-		
-		
-		
-		//response.getWriter().append("Served at: ").append(request.getContextPath());
-	}
-	
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        PrintWriter out = response.getWriter();
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
+        String loginButton = request.getParameter("login");
 
-	/**
-	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
-	 */
-//	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-//		// TODO Auto-generated method stub
-//		doGet(request, response);
-//	}
+        if (loginButton != null && loginButton.equals("Login")) {
+            // Check if username and password are provided
+            if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
+                out.print("<b>Please Enter Username and Password</b>");
+                response.sendRedirect("index.html");
+                return; // Exit the method
+            }
 
+            SQLConnection loginData = new SQLConnection();
+            String result = loginData.loginVerifyCheck(username, password);
+
+            if (result != null) {
+                if (result.equals("Incorrect password")) {
+                    out.print("<b>Please Enter Correct Password</b>");
+                } else if (result.equals("User not found")) {
+                    out.print("<b>User Not Found. Please Enter Correct Username</b>");
+                } else if (result.equals("Login successful")) {
+                    // Insert login time into database
+                    insertLoginTime(username,password);
+                    
+                    HttpSession session = request.getSession();
+                    session.setAttribute("username", username);
+                    response.sendRedirect("home.jsp");
+                    return; // Exit the method after redirect
+                } else {
+                    // If result is not one of the above, treat it as an error message
+                    request.setAttribute("errorMessage", result);
+                    response.sendRedirect("index.html");
+                    return; // Exit the method after redirect
+                }
+            }
+        } else {
+            // Redirect to register page
+            response.sendRedirect("Register.html");
+        }
+    }
+
+    
+    // Method to insert login time into database
+     void insertLoginTime(String username,String password) {
+        // JDBC connection parameters
+        String dbUsername = "sa";
+        String dbPassword = "ser@123";
+        String jdbcUrl = "jdbc:sqlserver://localhost:1433;databaseName=login;encrypt=true;trustServerCertificate=true;";
+        
+        // Get current time
+        LocalDateTime loginTime = LocalDateTime.now();
+        
+        // Format time as per database requirement
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String formattedLoginTime = loginTime.format(formatter);
+        
+        // Database operations
+        try (Connection connection = DriverManager.getConnection(jdbcUrl, dbUsername, dbPassword)) {
+            // Insert query
+            String query = "INSERT INTO SignIn (username, password,login_time) VALUES (?, ?,?)";
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setString(1, username);
+            preparedStatement.setString(2, password);
+            preparedStatement.setString(3, formattedLoginTime);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }
